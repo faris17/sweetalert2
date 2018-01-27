@@ -40,18 +40,20 @@ QUnit.test('getters', (assert) => {
 
   swal({
     showCancelButton: true,
-    imageUrl: 'image.png',
+    imageUrl: '/assets/swal2-logo.png',
     confirmButtonText: 'Confirm button',
     confirmButtonAriaLabel: 'Confirm button aria-label',
     cancelButtonText: 'Cancel button',
-    cancelButtonAriaLabel: 'Cancel button aria-label'
+    cancelButtonAriaLabel: 'Cancel button aria-label',
+    footer: '<b>Footer</b>'
   })
-  assert.ok(swal.getImage().src.indexOf('image.png'))
+  assert.ok(swal.getImage().src.indexOf('/assets/swal2-logo.png'))
   assert.equal(swal.getActions().textContent, 'Confirm buttonCancel button')
   assert.equal(swal.getConfirmButton().innerText, 'Confirm button')
   assert.equal(swal.getCancelButton().innerText, 'Cancel button')
   assert.equal(swal.getConfirmButton().getAttribute('aria-label'), 'Confirm button aria-label')
   assert.equal(swal.getCancelButton().getAttribute('aria-label'), 'Cancel button aria-label')
+  assert.equal(swal.getFooter().innerHTML, '<b>Footer</b>')
 
   swal({input: 'text'})
   $('.swal2-input').val('input text')
@@ -223,6 +225,38 @@ QUnit.test('input range', (assert) => {
   assert.equal(input.attr('min'), '1')
   assert.equal(input.attr('max'), '10')
   assert.equal(input.val(), '5')
+})
+
+QUnit.test('input type "select", inputOptions Map', (assert) => {
+  const inputOptions = new Map([
+    [1, 'Linus Torvalds'],
+    [2, 'Richard Stallman']
+  ])
+  swal({
+    input: 'select',
+    inputOptions
+  })
+  assert.equal($('.swal2-select option').length, 2)
+  assert.equal($('.swal2-select option')[0].innerHTML, 'Linus Torvalds')
+  assert.equal($('.swal2-select option')[0].value, '1')
+  assert.equal($('.swal2-select option')[1].innerHTML, 'Richard Stallman')
+  assert.equal($('.swal2-select option')[1].value, '2')
+})
+
+QUnit.test('input type "radio", inputOptions Map', (assert) => {
+  const inputOptions = new Map([
+    [1, 'Linus Torvalds'],
+    [2, 'Richard Stallman']
+  ])
+  swal({
+    input: 'radio',
+    inputOptions
+  })
+  assert.equal($('.swal2-radio label').length, 2)
+  assert.equal($('.swal2-radio label')[0].textContent, 'Linus Torvalds')
+  assert.equal($('.swal2-radio input')[0].value, '1')
+  assert.equal($('.swal2-radio label')[1].textContent, 'Richard Stallman')
+  assert.equal($('.swal2-radio input')[1].value, '2')
 })
 
 QUnit.test('queue', (assert) => {
@@ -456,7 +490,7 @@ QUnit.test('focusCancel', (assert) => {
 QUnit.test('image alt text and custom class', (assert) => {
   swal({
     text: 'Custom class is set',
-    imageUrl: 'image.png',
+    imageUrl: '/assets/swal2-logo.png',
     imageAlt: 'Custom icon',
     imageClass: 'image-custom-class'
   })
@@ -465,7 +499,7 @@ QUnit.test('image alt text and custom class', (assert) => {
 
   swal({
     text: 'Custom class isn\'t set',
-    imageUrl: 'image.png'
+    imageUrl: '/assets/swal2-logo.png'
   })
   assert.notOk($('.swal2-image').hasClass('image-custom-class'))
 })
@@ -474,7 +508,7 @@ QUnit.test('modal vertical offset', (assert) => {
   const done = assert.async(1)
   // create a modal with dynamic-height content
   swal({
-    imageUrl: '../assets/swal2-logo.png',
+    imageUrl: '/assets/swal2-logo.png',
     title: 'Title',
     html: '<hr><div style="height: 50px"></div><p>Text content</p>',
     type: 'warning',
@@ -718,4 +752,12 @@ QUnit.test('addition and removal of backdrop', (assert) => {
   swal({title: 'test'})
   assert.notOk(document.body.classList.contains('swal2-no-backdrop'))
   assert.notOk(document.documentElement.classList.contains('swal2-no-backdrop'))
+})
+
+QUnit.test('footer', (assert) => {
+  swal({title: 'Modal with footer', footer: 'I am footer'})
+  assert.ok($('.swal2-footer').is(':visible'))
+
+  swal('Modal w/o footer')
+  assert.notOk($('.swal2-footer').is(':visible'))
 })

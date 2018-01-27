@@ -1,6 +1,6 @@
 import defaultParams, { deprecatedParams } from './utils/params.js'
 import { swalClasses, iconTypes } from './utils/classes.js'
-import { warn, error, warnOnce, callIfFunction } from './utils/utils.js'
+import { objectToMap, warn, error, warnOnce, callIfFunction } from './utils/utils.js'
 import * as dom from './utils/dom.js'
 
 let popupParams = Object.assign({}, defaultParams)
@@ -82,6 +82,7 @@ const setParameters = (params) => {
   const confirmButton = dom.getConfirmButton()
   const cancelButton = dom.getCancelButton()
   const closeButton = dom.getCloseButton()
+  const footer = dom.getFooter()
 
   // Title
   if (params.titleText) {
@@ -94,22 +95,13 @@ const setParameters = (params) => {
     dom.addClass([document.documentElement, document.body], swalClasses['no-backdrop'])
   }
 
-  // Content
-  if (params.text || params.html) {
-    if (typeof params.html === 'object') {
-      content.innerHTML = ''
-      if (0 in params.html) {
-        for (let i = 0; i in params.html; i++) {
-          content.appendChild(params.html[i].cloneNode(true))
-        }
-      } else {
-        content.appendChild(params.html.cloneNode(true))
-      }
-    } else if (params.html) {
-      content.innerHTML = params.html
-    } else if (params.text) {
-      content.textContent = params.text
-    }
+  // Content as HTML
+  if (params.html) {
+    dom.parseHtmlToContainer(params.html, content)
+
+  // Content as plain text
+  } else if (params.text) {
+    content.textContent = params.text
     dom.show(content)
   } else {
     dom.hide(content)
@@ -305,6 +297,9 @@ const setParameters = (params) => {
     confirmButton.style.backgroundColor = confirmButton.style.borderLeftColor = confirmButton.style.borderRightColor = ''
     cancelButton.style.backgroundColor = cancelButton.style.borderLeftColor = cancelButton.style.borderRightColor = ''
   }
+
+  // Footer
+  dom.parseHtmlToContainer(params.footer, footer)
 
   // CSS animation
   if (params.animation === true) {
@@ -848,6 +843,7 @@ const sweetAlert = (...args) => {
     sweetAlert.getActions = () => dom.getActions()
     sweetAlert.getConfirmButton = () => dom.getConfirmButton()
     sweetAlert.getCancelButton = () => dom.getCancelButton()
+    sweetAlert.getFooter = () => dom.getFooter()
     sweetAlert.isLoading = () => dom.isLoading()
 
     sweetAlert.enableButtons = () => {
@@ -1029,10 +1025,11 @@ const sweetAlert = (...args) => {
           select.appendChild(placeholder)
         }
         populateInputOptions = (inputOptions) => {
-          for (let optionValue in inputOptions) {
+          inputOptions = objectToMap(inputOptions)
+          for (const [optionValue, optionLabel] of inputOptions) {
             const option = document.createElement('option')
             option.value = optionValue
-            option.innerHTML = inputOptions[optionValue]
+            option.innerHTML = optionLabel
             if (params.inputValue.toString() === optionValue) {
               option.selected = true
             }
@@ -1046,21 +1043,19 @@ const sweetAlert = (...args) => {
         const radio = dom.getChildByClass(content, swalClasses.radio)
         radio.innerHTML = ''
         populateInputOptions = (inputOptions) => {
-          for (let radioValue in inputOptions) {
+          inputOptions = objectToMap(inputOptions)
+          for (const [radioValue, radioLabel] of inputOptions) {
             const radioInput = document.createElement('input')
-            const radioLabel = document.createElement('label')
-            const radioLabelSpan = document.createElement('span')
+            const radioLabelElement = document.createElement('label')
             radioInput.type = 'radio'
             radioInput.name = swalClasses.radio
             radioInput.value = radioValue
-            if (params.inputValue.toString() === radioValue) {
+            if (params.inputValue.toString() === radioValue.toString()) {
               radioInput.checked = true
             }
-            radioLabelSpan.innerHTML = inputOptions[radioValue]
-            radioLabel.appendChild(radioInput)
-            radioLabel.appendChild(radioLabelSpan)
-            radioLabel.for = radioInput.id
-            radio.appendChild(radioLabel)
+            radioLabelElement.innerHTML = radioLabel
+            radioLabelElement.insertBefore(radioInput, radioLabelElement.firstChild)
+            radio.appendChild(radioLabelElement)
           }
           dom.show(radio)
           const radios = radio.querySelectorAll('input')
@@ -1108,7 +1103,7 @@ const sweetAlert = (...args) => {
       } else if (typeof params.inputOptions === 'object') {
         populateInputOptions(params.inputOptions)
       } else {
-        error('Unexpected type of inputOptions! Expected object or Promise, got ' + typeof params.inputOptions)
+        error('Unexpected type of inputOptions! Expected object, Map or Promise, got ' + typeof params.inputOptions)
       }
     }
 

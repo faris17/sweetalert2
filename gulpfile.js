@@ -15,7 +15,7 @@ const utils = require('./config/utils.js')
 
 gulp.task('compress', ['js-lint', 'dev', 'production', 'all', 'all.min'])
 
-gulp.task('dev', () => {
+gulp.task('dev', ['js-lint'], () => {
   return utils.packageRollup({
     dest: 'dist/' + pack.name + '.js',
     format: 'umd'
@@ -47,15 +47,18 @@ gulp.task('all.min', ['sass'], () => {
   })
 })
 
-gulp.task('sass', ['sass-lint'], (cb) => {
-  gulp.src('src/sweetalert2.scss')
+gulp.task('sass', ['sass-lint'], () => {
+  return gulp.src('src/sweetalert2.scss')
     .pipe(sass())
     .pipe(autoprefix())
     .pipe(gulp.dest('dist'))
+})
+
+gulp.task('css.min', ['sass'], () => {
+  return gulp.src('dist/sweetalert2.css')
     .pipe(cleanCSS())
     .pipe(rename({extname: '.min.css'}))
     .pipe(gulp.dest('dist'))
-    .on('end', cb)
 })
 
 gulp.task('ts', ['ts-lint'], () => {
@@ -86,7 +89,7 @@ gulp.task('ts-lint', () => {
     .pipe(tslint.report())
 })
 
-gulp.task('build', ['sass', 'ts', 'compress'])
+gulp.task('build', ['sass', 'ts', 'compress', 'css.min'])
 
 gulp.task('default', ['build'])
 
@@ -104,13 +107,14 @@ gulp.task('watch', ['default'], () => {
 
   gulp.watch([
     'test/sandbox.html',
-    'dist/sweetalert2.all.min.js'
+    'test/qunit/*.js',
+    'dist/sweetalert2.js',
+    'dist/sweetalert2.css'
   ]).on('change', browserSync.reload)
 
-  gulp.watch([
-    'src/**/*.js',
-    'test/*.js'
-  ], ['compress'])
+  gulp.watch(['src/**/*.js'], ['dev'])
 
-  gulp.watch(['src/*.scss'], ['sass', 'compress'])
+  gulp.watch(['src/*.scss'], ['sass'])
+
+  gulp.watch(['sweetalert2.d.ts'], ['ts'])
 })
